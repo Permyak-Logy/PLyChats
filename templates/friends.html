@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div align="right">
+    <h1>Друзья</h1>
+    <a href="/friends/requests" class="btn btn-primary">Заявки в друзья</a>
+    {% for item in friends %}
+        <div class="col-md6 border rounded" style="width: 70%;">
+            <div align="left"><a href="/{{ item.id }}">
+                {{ item.surname }} {{ item.name }} {% if item.patronymic %}{{ item.patronymic }}{% endif %}</a><br />
+                {% if item.address %}{{ item.address }}{% endif %}
+            </div>
+            {% if item.about %}
+                <p align="center">{{ item.about }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

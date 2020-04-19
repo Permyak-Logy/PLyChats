@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>{{title}}</h1>
+{% for item in current_user.chats %}
+    <div class="col-md6 border rounded">
+        <div align="left">
+                <a href="/chats/{{ item.id }}">{{ item.get_name(session, current_user) }}</a>
+            <br/>
+            <p align="left">{{item.created_date}}</p>
+        </div>
+
+        <div align="right">
+            <a href="/chats/{{ item.id }}" class="btn btn-warning">Просмотреть</a>
+        </div>
+    </div>
+{% endfor %}
+
+{% endblock %}

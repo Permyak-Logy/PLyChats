@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 align="right">{{ user.name }} {{ user.surname}}</h1>
+
+{% if current_user == user %}
+
+{% elif session.query(FriendRequest).filter(FriendRequest.sender == current_user.id, FriendRequest.recipient == user.id).first()%}
+    <div align="right"><h5 style="color: green;">Запрос дружбы отправлен</h5></div>
+{% elif not current_user.is_friend(user.id, session) %}
+    <div align="right"><a href="/friends/requests/send/{{ user.id }}" class="btn btn-success">Отправить запрос дружбы</a></div>
+{% else %}
+    <div align="right"><a href="/friends/delete/{{ user.id }}" class="btn btn-danger">Удалить из друзей</a></div>
+{% endif %}
+
+<div align="right">
+    <p>
+        <b>Стена</b>
+        {% if current_user == user %}
+            <b> | </b>
+            <a class="btn btn-success" href="/news/add">Создать запись</a>
+        {% endif %}
+    </p>
+    <hr />
+</div>
+
+{% for item in user.news if not item.is_private or item.user == current_user %}
+    <div align="right">
+        <div class="col-md6 border rounded" style="width: 70%">
+            <div align="center">
+                <a href="/{{ user.id }}">{{ item.user.surname }} {{ item.user.name }}</a>
+                <span><b>{{item.title}}</b></span><br />
+                <p align="center">{{item.created_date}}</p>
+            </div>
+            <div align="center">
+                {% for line in item.content.split("\n") %}
+                    <i>{{ line }}</i><br />
+                {% endfor %}
+            </div>
+            <div align="right">
+                <a href="/news/{{ item.id }}" class="btn btn-warning">Просмотреть</a>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+{% endblock %}
