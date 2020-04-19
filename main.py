@@ -67,6 +67,7 @@ def list_friends():
 @login_required
 def delete_friend(id):
     session = db_session.create_session()
+
     if current_user.is_friend(id, session):
         session.delete(current_user.get_obj_friends_with_user(id, session))
         session.commit()
@@ -257,7 +258,8 @@ def delete_comment(news_id, comment_id):
 @login_required
 def list_chats():
     session = db_session.create_session()
-    return render_template('chats.html', title='Чаты', session=session)
+    chats = list(current_user.chats)
+    return render_template('chats.html', title='Чаты', session=session, chats=chats)
 
 
 @app.route('/chats/<int:id>', methods=['GET', 'POST'])
@@ -269,7 +271,8 @@ def view_chat(id):
         chat = list(filter(lambda x: x.id == id, current_user.chats))
         if chat:
             messages = session.query(Message).filter(Message.chat_id == id).all()
-            return render_template('view_chat.html', title=chat[0].get_name(session, current_user), chat=chat[0], form=form,
+            return render_template('view_chat.html', title=chat[0].get_name(session, current_user), chat=chat[0],
+                                   form=form,
                                    messages=messages, session=session, User=User)
         else:
             abort(404)
@@ -287,7 +290,7 @@ def view_chat(id):
 
 
 @app.route('/chats/<int:chat_id>/delete_message/<int:message_id>')
-def delete_message(chat_id: int, message_id: int):
+def delete_message(chat_id, message_id):
     session = db_session.create_session()
     chat = session.query(Chat).filter(Chat.id == chat_id).first()
     if chat:
@@ -301,6 +304,25 @@ def delete_message(chat_id: int, message_id: int):
             abort(404)
     else:
         abort(404)
+
+
+@app.route('/chats/open_with_friend/<int:id>')
+def open_chat_with_user(id):
+    session = db_session.create_session()
+    if not current_user.is_friend(id, session):
+        abort(404)
+    user = session.query(User).filter(User.id == id).first()
+    if not user:
+        abort(404)
+    for chat in filter(lambda x: any(map(lambda y: x.id == y.id, user.chats)) and not x.is_public, current_user.chats):
+        pass
+    else:
+        chat = Chat(owner=current_user.id, is_public=False)
+        current_user.chats.append(chat)
+        user.chats.append(chat)
+        session.commit()
+    session.close()
+    return redirect(f'chats/{chat.id}')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -383,31 +405,8 @@ def t():
     session.commit()
 
     if not user1.is_friend(user2.id, session):
-        data = [
-            {
-                'name': 'Феликс',
-                'surname': 'Шулёв',
-                'email': 'flex@mail.ru'
-            },
-            {
-                'name': 'Димон',
-                'surname': 'Пёрышкин',
-                'email': 'dip@mail.ru'
-            }
-        ]
-        for id, elem in enumerate(data):
-            if not session.query(User).filter(User.id == id + 1).first():
-                user = User(**elem)
-                user.set_password('123')
-                session.add(user)
-        session.commit()
-
-    if False and not user1.is_friend(user2.id):
-        f1 = Friends(user_id_a=user1.id, user_id_b=user2.id)
-        session.add(f1)
-        fa = session.query(Friends).filter((Friends.user_id_a == user1.id) | (Friends.user_id_b == user1.id)).all()
-        for f in fa:
-            print(f.user_id_a, f.user_id_b)
+        friend = Friends(user_id_a=user1.id, user_id_b=user2.id)
+        session.add(friend)
         session.commit()
 
     chat = session.query(Chat).filter(Chat.id == 1).first()

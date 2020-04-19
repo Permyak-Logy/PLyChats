@@ -3,7 +3,7 @@
 {% block content %}
 
 <h1>{{title}}</h1>
-{% for item in current_user.chats %}
+{% for item in chats %}
     <div class="col-md6 border rounded">
         <div align="left">
                 <a href="/chats/{{ item.id }}">{{ item.get_name(session, current_user) }}</a>

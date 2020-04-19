@@ -44,7 +44,6 @@ class User(SqlAlchemyBase, UserMixin):
         return check_password_hash(self.hashed_password, password)
 
     def get_obj_friends_with_user(self, user_id: int, session: sqlalchemy.orm.Session):
-        session = create_session() if session is None else session
         friends = session.query(Friends).filter(
             (Friends.user_id_a == self.id) | (Friends.user_id_b == self.id)).filter(
             (Friends.user_id_a == user_id) | (Friends.user_id_b == user_id)).first()
@@ -54,7 +53,6 @@ class User(SqlAlchemyBase, UserMixin):
         return bool(self.get_obj_friends_with_user(user_id, session))
 
     def get_all_friends_users(self, session: sqlalchemy.orm.Session):
-        session = create_session() if session is None else session
         friends = session.query(Friends).filter(
             (Friends.user_id_a == self.id) | (Friends.user_id_b == self.id)).all()
         friends_list = list(map(lambda x: x.user_id_a if x.user_id_a != self.id else x.user_id_b,
