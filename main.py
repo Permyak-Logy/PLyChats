@@ -316,17 +316,20 @@ def open_chat_with_user(id):
         if any(map(lambda y: chat.id == y.id, user.chats)):
             session.close()
             return redirect(f'/chats/{chat.id}')
-    # session.close()
-    #
-    # session = db_session.create_session()
-    user = session.query(User).filter(User.id == id).first()
-    chat = Chat(owner=current_user.id, is_public=False)
+    return redirect(f'/chats/create/{id}')
+
+
+@app.route('/chats/create/<int:id>')
+def add_chat(id):
+    session = db_session.create_session()
+    chat = Chat()
+    chat.owner = current_user.id
+    chat.is_public = False
     current_user.chats.append(chat)
+    user = session.query(User).filter(User.id == id).first()
     user.chats.append(chat)
-    session.add(chat)
     session.commit()
-    session.close()
-    return redirect(f'/chats/{chat.id}')
+    return redirect(f'/chat/{chat.id}')
 
 
 # @app.route('/chats/add/<user:id>')
