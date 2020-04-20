@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, abort
+from flask import Flask, render_template, redirect, request, abort, url_for
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 from forms import LoginForm, RegisterForm, NewsForm, MessageForm
@@ -309,20 +309,28 @@ def delete_message(chat_id, message_id):
 @app.route('/chats/open_with_friend/<int:id>')
 def open_chat_with_user(id):
     session = db_session.create_session()
-    if not current_user.is_friend(id, session):
-        abort(404)
     user = session.query(User).filter(User.id == id).first()
-    if not user:
+    if not user or not user.is_friend(current_user.id, session):
         abort(404)
-    for chat in filter(lambda x: any(map(lambda y: x.id == y.id, user.chats)) and not x.is_public, current_user.chats):
-        pass
-    else:
-        chat = Chat(owner=current_user.id, is_public=False)
-        current_user.chats.append(chat)
-        user.chats.append(chat)
-        session.commit()
+    for chat in current_user.chats:
+        if any(map(lambda y: chat.id == y.id, user.chats)):
+            session.close()
+            return redirect(f'/chats/{chat.id}')
+    # session.close()
+    #
+    # session = db_session.create_session()
+    user = session.query(User).filter(User.id == id).first()
+    chat = Chat(owner=current_user.id, is_public=False)
+    current_user.chats.append(chat)
+    user.chats.append(chat)
+    session.add(chat)
+    session.commit()
     session.close()
-    return redirect(f'chats/{chat.id}')
+    return redirect(f'/chats/{chat.id}')
+
+
+# @app.route('/chats/add/<user:id>')
+# def p(*args, **kwargs): pass
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -404,6 +412,13 @@ def t():
         session.add(user2)
     session.commit()
 
+    user3: User = session.query(User).filter(User.id == 3).first()
+    if not user3:
+        user3 = User(name='Елена', surname='sh', email='e@mail.ru')
+        user3.set_password('123')
+        session.add(user3)
+    session.commit()
+
     if not user1.is_friend(user2.id, session):
         friend = Friends(user_id_a=user1.id, user_id_b=user2.id)
         session.add(friend)
@@ -417,12 +432,6 @@ def t():
         message = Message(content=f'Сообщение {chat.id}', user_id=user1.id, chat_id=chat.id)
         session.add(message)
         session.commit()
-
-    for message in chat.messages:
-        print(message.content, message.user_id)
-    for message in session.query(Message).all():
-        print(message.content, message.user_id, message.chat_id)
-    print(chat.get_name(session, user1))
     session.close()
 
 

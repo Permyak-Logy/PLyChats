@@ -21,7 +21,7 @@
 </form>
 
 {% for item in messages|reverse %}
-    <div class="col-md6 border rounded">
+    <div class="col-md6 border rounded" style="background-color: lightgray">
         {% set author = session.query(User).filter(User.id == item.user_id).first() %}
 
         <div align="{% if item.user_id == current_user.id %}right{% else %}left{% endif %}"><a href="/{{ item.user_id }}">{{ author.surname }} {{ author.name }}</a><br />
