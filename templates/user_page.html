@@ -8,7 +8,7 @@
 
 {% elif session.query(FriendRequest).filter(FriendRequest.sender == current_user.id, FriendRequest.recipient == user.id).first()%}
     <div align="right"><h5 style="color: green;">Запрос дружбы отправлен</h5></div>
-{% elif not current_user.is_friend(user.id, session) %}
+{% elif not current_user.is_friend(session, user.id) %}
     <div align="right"><a href="/friends/requests/send/{{ user.id }}" class="btn btn-success">Отправить запрос дружбы</a></div>
 {% else %}
     <div align="right"><a href="/chats/open_with_friend/{{ user.id }}" class="btn btn-primary"></a></div>

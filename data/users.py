@@ -1,7 +1,8 @@
 import datetime
 import sqlalchemy
-from data.db_session import SqlAlchemyBase, create_session
-from data.friends import Friends
+from .chats import Chat
+from .db_session import SqlAlchemyBase
+from .friends import Friends
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from sqlalchemy import orm
@@ -27,15 +28,16 @@ class User(SqlAlchemyBase, UserMixin):
     modified_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
 
     news = orm.relation("News", back_populates='user')
-    chats = orm.relation("Chat",
-                         secondary="association_chats_users",
-                         backref="user")
 
     def __repr__(self):
-        return f"User(id={self.id} email='{self.email}' surname='{self.surname}' name='{self.name}')"
+        return f"User(id={self.id} " \
+               f"email='{self.email}' " \
+               f"surname='{self.surname}'  " \
+               f"name='{self.name}' " \
+               f"patronymic='{self.patronymic}')"
 
-    def str(self):
-        return repr(self)
+    def __str__(self):
+        return f'{self.surname} {self.name} {self.patronymic if self.patronymic else ""}'
 
     def set_password(self, password: str):
         self.hashed_password = generate_password_hash(password)
@@ -43,14 +45,14 @@ class User(SqlAlchemyBase, UserMixin):
     def check_password(self, password: str):
         return check_password_hash(self.hashed_password, password)
 
-    def get_obj_friends_with_user(self, user_id: int, session: sqlalchemy.orm.Session):
+    def get_obj_friends_with_user(self, session: sqlalchemy.orm.Session, user_id: int):
         friends = session.query(Friends).filter(
             (Friends.user_id_a == self.id) | (Friends.user_id_b == self.id)).filter(
             (Friends.user_id_a == user_id) | (Friends.user_id_b == user_id)).first()
         return friends
 
-    def is_friend(self, user_id: int, session: sqlalchemy.orm.Session):
-        return bool(self.get_obj_friends_with_user(user_id, session))
+    def is_friend(self, session: sqlalchemy.orm.Session, user_id: int):
+        return bool(self.get_obj_friends_with_user(session, user_id))
 
     def get_all_friends_users(self, session: sqlalchemy.orm.Session):
         friends = session.query(Friends).filter(
@@ -58,3 +60,16 @@ class User(SqlAlchemyBase, UserMixin):
         friends_list = list(map(lambda x: x.user_id_a if x.user_id_a != self.id else x.user_id_b,
                                 friends))
         return session.query(User).filter(User.id.in_(friends_list)).all()
+
+    def _get_all_chats(self, session: sqlalchemy.orm.Session) -> sqlalchemy.orm.Query:
+        return session.query(Chat).filter((Chat.user_a == self.id) | (Chat.user_b == self.id))
+
+    def get_all_chats(self, session: sqlalchemy.orm.Session) -> list:
+        return self._get_all_chats(session).all()
+
+    def get_chat_with_user(self, session: sqlalchemy.orm.Session, user_id: int) -> Chat:
+        all_chats = self._get_all_chats(session)
+        return all_chats.filter((Chat.user_a == user_id) | (Chat.user_b == user_id)).first()
+
+    def get_chat(self, session: sqlalchemy.orm.Session, chat_id) -> Chat:
+        return self._get_all_chats(session).filter(Chat.id == chat_id).first()

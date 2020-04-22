@@ -6,13 +6,14 @@
 {% for item in chats %}
     <div class="col-md6 border rounded">
         <div align="left">
-                <a href="/chats/{{ item.id }}">{{ item.get_name(session, current_user) }}</a>
+                <a href="/chats/{{ item['id'] }}">
+                    {{ item['name'] }}
+                </a>
             <br/>
-            <p align="left">{{item.created_date}}</p>
+            <p align="left">{{item['chat'].created_date}}</p>
         </div>
-
         <div align="right">
-            <a href="/chats/{{ item.id }}" class="btn btn-warning">Просмотреть</a>
+            <a href="/chats/{{ item['id']}}" class="btn btn-warning">Просмотреть</a>
         </div>
     </div><br />
 {% endfor %}

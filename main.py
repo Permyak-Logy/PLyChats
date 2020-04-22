@@ -21,7 +21,6 @@ app.config['SECRET_KEY'] = 'Pip123ininty321Subject'
 @app.route('/chats/create')
 @app.route('/chats/<int:chat_id>/edit')
 @app.route('/chats/<int:chat_id>/delete')
-@app.route('/chats/<int:chat_id>/delete_message/<int:message_id>')
 @app.route('/me/edit')
 @app.route('/news')
 @login_required
@@ -68,7 +67,7 @@ def list_friends():
 def delete_friend(id):
     session = db_session.create_session()
 
-    if current_user.is_friend(id, session):
+    if current_user.is_friend(session, id):
         session.delete(current_user.get_obj_friends_with_user(id, session))
         session.commit()
         return redirect(f'/{id}')
@@ -91,7 +90,7 @@ def list_friend_requests():
 def send_friend_requests(id):
     session = db_session.create_session()
 
-    if current_user.is_friend(id, session):
+    if current_user.is_friend(session, id):
         return redirect(f'/{id}')
 
     # Если запрос уже бьл то отменить
@@ -258,8 +257,15 @@ def delete_comment(news_id, comment_id):
 @login_required
 def list_chats():
     session = db_session.create_session()
-    chats = list(current_user.chats)
-    return render_template('chats.html', title='Чаты', session=session, chats=chats)
+    chats = current_user.get_all_chats(session)
+    chats_list_dicts = [
+        {
+            'id': chat.id, 'chat': chat,
+            'name': str(session.query(User).filter(User.id == chat.get_opponent_id(session, current_user.id)).first())
+        } for chat in chats
+    ]
+    session.close()
+    return render_template('chats.html', title='Чаты', chats=chats_list_dicts)
 
 
 @app.route('/chats/<int:id>', methods=['GET', 'POST'])
@@ -268,22 +274,32 @@ def view_chat(id):
     form = MessageForm()
     if request.method == "GET":
         session = db_session.create_session()
-        chat = list(filter(lambda x: x.id == id, current_user.chats))
+        chat = current_user.get_chat(session, id)
+
         if chat:
-            messages = session.query(Message).filter(Message.chat_id == id).all()
-            return render_template('view_chat.html', title=chat[0].get_name(session, current_user), chat=chat[0],
-                                   form=form,
-                                   messages=messages, session=session, User=User)
+            opponent_user = session.query(User).get(chat.get_opponent_id(session, current_user.id))
+            messages = chat.get_all_messages(session)
+            messages_list_dicts = [
+                {
+                    'id': message.id, 'message': message,
+                    'author': session.query(User).filter(User.id == message.user_id).first()
+                } for message in messages
+            ]
+            session.close()
+            return render_template('view_chat.html',
+                                   title=str(opponent_user), chat=chat, form=form,
+                                   messages=messages_list_dicts, User=User)
         else:
             abort(404)
 
     if form.validate_on_submit():
         session = db_session.create_session()
-        chat = list(filter(lambda x: x.id == id, current_user.chats))
+        chat = current_user.get_chat(session, id)
         if chat:
             message = Message(content=form.content.data, user_id=current_user.id, chat_id=id)
             session.add(message)
             session.commit()
+            session.close()
             return redirect(f'/chats/{id}')
         else:
             abort(404)
@@ -299,6 +315,7 @@ def delete_message(chat_id, message_id):
         if message:
             session.delete(message)
             session.commit()
+            session.close()
             return redirect(f'/chats/{chat_id}')
         else:
             abort(404)
@@ -308,28 +325,23 @@ def delete_message(chat_id, message_id):
 
 @app.route('/chats/open_with_friend/<int:id>')
 def open_chat_with_user(id):
+    print(current_user.id, id)
     session = db_session.create_session()
     user = session.query(User).filter(User.id == id).first()
-    if not user or not user.is_friend(current_user.id, session):
+    if not user or not user.is_friend(session, current_user.id):
+        print(404)
         abort(404)
-    for chat in current_user.chats:
-        if any(map(lambda y: chat.id == y.id, user.chats)):
-            session.close()
-            return redirect(f'/chats/{chat.id}')
-    return redirect(f'/chats/create/{id}')
+    chat = user.get_chat_with_user(session, user.id)
+    print('=', chat)
+    if not chat:
+        chat = Chat(user_a=current_user.id, user_b=id)
+        session.add(chat)
+        session.commit()
 
-
-@app.route('/chats/create/<int:id>')
-def add_chat(id):
-    session = db_session.create_session()
-    chat = Chat()
-    chat.owner = current_user.id
-    chat.is_public = False
-    current_user.chats.append(chat)
-    user = session.query(User).filter(User.id == id).first()
-    user.chats.append(chat)
-    session.commit()
-    return redirect(f'/chat/{chat.id}')
+    chat = user.get_chat_with_user(session, user.id)
+    print('=', chat)
+    session.close()
+    return redirect(f'/chats/{chat.id}')
 
 
 # @app.route('/chats/add/<user:id>')
@@ -422,16 +434,15 @@ def t():
         session.add(user3)
     session.commit()
 
-    if not user1.is_friend(user2.id, session):
+    if not user1.is_friend(session, user2.id):
         friend = Friends(user_id_a=user1.id, user_id_b=user2.id)
         session.add(friend)
         session.commit()
 
     chat = session.query(Chat).filter(Chat.id == 1).first()
     if not chat:
-        chat = Chat(owner=user1.id, is_public=False)
-        user1.chats.append(chat)
-        user2.chats.append(chat)
+        chat = Chat(user_a=user1.id, user_b=user2.id)
+        session.add(chat)
         message = Message(content=f'Сообщение {chat.id}', user_id=user1.id, chat_id=chat.id)
         session.add(message)
         session.commit()
