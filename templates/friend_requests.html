@@ -12,8 +12,7 @@
 {% for item in requests_in %}
     <div align="right">
         <div class="col-md6 border rounded" style="width: 70%;">
-            {% set user = session.query(User).filter(User.id == item.sender).first() %}
-
+            {% set user = item['sender'] %}
             <div align="left">
                 <a href="/{{ user.id }}">{{ user.surname }} {{ user.name }} {{ user.patronymic }}</a><br />
                 {% if user.address %}{{ user.address }}{% endif %}
@@ -23,8 +22,8 @@
                 <p align="center">{{ user.about }}</p>
             {% endif %}
 
-            <a href="/friends/requests/accept/{{ item.id }}" class="btn btn-primary">Принять</a>
-            <a href="/friends/requests/delete/{{ item.id }}" class="btn btn-danger">Отклонить</a>
+            <a href="/friends/requests/accept/{{ item['id'] }}" class="btn btn-primary">Принять</a>
+            <a href="/friends/requests/delete/{{ item['id'] }}" class="btn btn-danger">Отклонить</a>
         </div>
     </div>
 {% endfor %}
@@ -33,7 +32,7 @@
 {% for item in requests_out %}
     <div align="right">
         <div class="col-md6 border rounded" style="width: 70%;">
-            {% set user = session.query(User).filter(User.id == item.recipient).first() %}
+            {% set user = item['recipient'] %}
 
             <div align="left"><a href="/{{ user.id }}">{{ user.surname }} {{ user.name }} {% if user.patronymic %}{{ user.patronymic }}{% endif %}</a><br />
                 {% if user.address %}{{ user.address }}{% endif %}
@@ -43,7 +42,7 @@
                 <p align="center">{{ user.about }}</p>
             {% endif %}
 
-            <a href="/friend_requests/delete/{{ item.id }}" class="btn btn-danger">Удалить</a>
+            <a href="/friend_requests/delete/{{ item['id'] }}" class="btn btn-danger">Удалить</a>
         </div>
     </div>
 {% endfor %}

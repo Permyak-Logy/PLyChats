@@ -36,7 +36,7 @@
         <a class="navbar-brand" href="#"><h4 style="font-family: Showcard Gothic; font-size: 170%">PLy.Chats</h4></a>
 
         {% if current_user.is_authenticated %}
-            <a class="navbar-brand" href="/logout">{{ current_user.surname }} {{ current_user.name }} [id: {{ current_user.id }}]</a>
+            <a class="navbar-brand" href="/me/edit">{{ current_user.surname }} {{ current_user.name }} [id: {{ current_user.id }}]</a>
         {% else %}
             <p>
                 <a class="btn btn-primary " href="/register">Зарегистрироваться</a>

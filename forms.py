@@ -21,6 +21,17 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Зарегистрироваться')
 
 
+class AccountForm(FlaskForm):
+    name = StringField('Имя', validators=[DataRequired()])
+    surname = StringField('Фамилия', validators=[DataRequired()])
+    patronymic = StringField('Отчество')
+    about = TextAreaField('О себе')
+    email = EmailField('Логин / Почта')
+    phone = StringField('Телефон')
+    address = StringField('Адресс')
+    submit = SubmitField('Сохранить')
+
+
 class NewsForm(FlaskForm):
     title = StringField('Заголовок', validators=[DataRequired()])
     content = TextAreaField("Содержание")

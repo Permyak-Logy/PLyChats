@@ -4,7 +4,7 @@
 
 <h1 align="center">{{ news.title }}</h1>
 <div class="col-md6 border rounded">
-    <div align="left"><a href="/{{ news.user.id }}">{{ news.user.surname }} {{ news.user.name }}</a><br />
+    <div align="left"><a href="/{{ user.id }}">{{ user }}</a><br />
         <p align="left">{{news.created_date}}</p>
     </div>
     <div align="center">
@@ -36,20 +36,20 @@
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
 </form>
 
-{% for item in news.comments %}
+{% for item in comments %}
     <div class="col-md6 border rounded">
-        {% set author = session.query(User).filter(User.id == item.user_id).first() %}
-        <div align="left"><a href="/{{ item.user_id }}">{{ author.surname }} {{ author.name }}</a><br />
-            <p align="left">{{item.created_date}}</p>
+        {% set author = item['author'] %}
+        <div align="left"><a href="/{{ item['comment'].user_id }}">{{ author.surname }} {{ author.name }}</a><br />
+            <p align="left">{{item['comment'].created_date}}</p>
         </div>
         <div align="center">
-            {% for line in item.content.split("\n") %}
+            {% for line in item['comment'].content.split("\n") %}
                 <i>{{ line }}</i><br />
             {% endfor %}
         </div>
-        {% if item.user_id == current_user.id or news.user == current_user %}
+        {% if item['comment'].user_id == current_user.id or news.user == current_user %}
             <div align="right">
-                <a href="/news/{{ news.id }}/comments/delete/{{ item.id }}" class="btn btn-danger">Удалить</a>
+                <a href="/news/{{ news.id }}/comments/delete/{{ item['id'] }}" class="btn btn-danger">Удалить</a>
             </div>
         {% endif %}
     </div>

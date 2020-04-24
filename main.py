@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, request, abort, url_for
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
-from forms import LoginForm, RegisterForm, NewsForm, MessageForm
+from forms import LoginForm, RegisterForm, NewsForm, MessageForm, AccountForm
 from data import db_session
 
 from data.chats import Chat
@@ -12,19 +12,28 @@ from data.users import User
 from data.friends import Friends
 from data.friend_requests import FriendRequest
 
+from datetime import datetime
+
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'Pip123ininty321Subject'
 
 
-@app.route('/chats/create')
-@app.route('/chats/<int:chat_id>/edit')
-@app.route('/chats/<int:chat_id>/delete')
-@app.route('/me/edit')
+@app.route('/me/delete')
 @login_required
-def not_using(*args, **kwargs):
-    return render_template('base.html', title='PLy.Chats')
+def delete_me(*args, **kwargs):
+    session = db_session.create_session()
+    user = session.query(User).filter(User.id == current_user.id).first()
+    if user:
+        for friend in user.get_all_friends_users(session):
+            delete_friend(friend.id)
+        for news in user.news:
+            delete_news(news.id)
+        session.delete(user)
+        session.commit()
+        session.close()
+    return redirect('/')
 
 
 @app.route('/')
@@ -41,13 +50,66 @@ def me():
     return redirect(f'/{current_user.id}')
 
 
+@app.route('/me/edit', methods=['GET', 'POST'])
+@login_required
+def edit_me():
+    form = AccountForm()
+    if request.method == "GET":
+        session = db_session.create_session()
+        user = session.query(User).filter(User.id == current_user.id).first()
+        if user:
+            form.name.data = user.name
+            form.surname.data = user.surname
+            form.patronymic.data = user.patronymic
+            form.about.data = user.about
+            form.email.data = user.email
+            form.phone.data = user.phone
+            form.address.data = user.address
+            session.close()
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        user = session.query(User).filter(User.id == current_user.id).first()
+        if user:
+            if session.query(User).filter(User.id != user.id, User.email == form.email.data).first():
+                return render_template('me.html', title='Аккаунт',
+                                       form=form,
+                                       message="Такой email уже занят")
+            if session.query(User).filter(User.id != user.id, User.phone == form.phone.data).first():
+                return render_template('me.html', title='Аккаунт',
+                                       form=form,
+                                       message="Такой телефон уже занят")
+
+            user.name = form.name.data
+            user.surname = form.surname.data
+            user.patronymic = form.patronymic.data
+            user.about = form.about.data
+            user.email = form.email.data
+            user.phone = form.phone.data
+            user.address = form.address.data
+            user.modified_date = datetime.now()
+            session.commit()
+            session.close()
+            return redirect('/me')
+        else:
+            abort(404)
+    return render_template('me.html', title='Аккаунт', form=form)
+
+
 @app.route('/<int:id>')
 def user_page(id):
     session = db_session.create_session()
     user = session.query(User).filter(User.id == id).first()
     if user:
-        return render_template('user_page.html', title=f'{user.surname} {user.name}', user=user,
-                               session=session, FriendRequest=FriendRequest)
+        current_user_is_friend_user = current_user.is_friend(session, user.id)
+        friend_request = session.query(FriendRequest).filter(FriendRequest.sender == current_user.id,
+                                                             FriendRequest.recipient == user.id).first()
+        news = list(filter(lambda x: not x.is_private or x.user == current_user, user.news))
+
+        session.close()
+        return render_template('user_page.html', title=f'{user.surname} {user.name}', user=user, news=news,
+                               current_user_is_friend_user=current_user_is_friend_user, friend_request=friend_request)
     else:
         abort(404)
 
@@ -57,8 +119,8 @@ def user_page(id):
 def list_friends():
     session = db_session.create_session()
     friends = current_user.get_all_friends_users(session)
-    return render_template('friends.html', title='Друзья', friends=friends,
-                           session=session, User=User)
+    session.close()
+    return render_template('friends.html', title='Друзья', friends=friends)
 
 
 @app.route('/friends/delete/<int:id>')
@@ -83,8 +145,23 @@ def list_friend_requests():
     session = db_session.create_session()
     friend_requests_in = session.query(FriendRequest).filter(FriendRequest.recipient == current_user.id).all()
     friend_requests_out = session.query(FriendRequest).filter(FriendRequest.sender == current_user.id).all()
-    return render_template('friend_requests.html', title='Заявки в друзья', session=session, User=User,
-                           requests_in=friend_requests_in, requests_out=friend_requests_out)
+    friend_requests_in_list_dict = [
+        {
+            'id': elem.id,
+            'sender': session.query(User).filter(User.id == elem.sender).first(),
+            'recipient': session.query(User).filter(User.id == elem.recipient).first()
+        } for elem in friend_requests_in
+    ]
+    friend_requests_out_list_dict = [
+        {
+            'id': elem.id,
+            'sender': session.query(User).filter(User.id == elem.sender).first(),
+            'recipient': session.query(User).filter(User.id == elem.recipient).first()
+        } for elem in friend_requests_out
+    ]
+    session.close()
+    return render_template('friend_requests.html', title='Заявки в друзья',
+                           requests_in=friend_requests_in_list_dict, requests_out=friend_requests_out_list_dict)
 
 
 @app.route('/friends/requests/send/<int:id>')
@@ -93,18 +170,21 @@ def send_friend_requests(id):
     session = db_session.create_session()
 
     if current_user.is_friend(session, id):
+        session.close()
         return redirect(f'/{id}')
 
     # Если запрос уже бьл то отменить
     friend_request = session.query(FriendRequest).filter(FriendRequest.sender == current_user.id,
                                                          FriendRequest.recipient == id).first()
     if friend_request:
+        session.close()
         return redirect(f'/{id}')
 
     # При взаимных запросах принять
     friend_request = session.query(FriendRequest).filter(FriendRequest.sender == id,
                                                          FriendRequest.recipient == current_user.id).first()
     if friend_request:
+        session.close()
         return redirect(f'/friends/requests/accept/{friend_request.id}')
 
     friend_request = FriendRequest()
@@ -112,6 +192,7 @@ def send_friend_requests(id):
     friend_request.recipient = id
     session.add(friend_request)
     session.commit()
+    session.close()
     return redirect(f'/{id}')
 
 
@@ -126,6 +207,7 @@ def accept_friend_request(id):
         session.add(friend)
         session.delete(friend_request)
         session.commit()
+        session.close()
         return redirect('/friends/requests')
     else:
         abort(404)
@@ -141,6 +223,7 @@ def delete_friend_requests(id):
     if friend_request:
         session.delete(friend_request)
         session.commit()
+        session.close()
         return redirect('/friends/requests')
     else:
         abort(404)
@@ -155,8 +238,17 @@ def view_news(id):
         news = session.query(News).filter(News.id == id,
                                           (News.is_private == False) | (News.user == current_user)).first()
         if news:
+            comments_list_dict = [
+                {
+                    'id': elem.id,
+                    'author': session.query(User).filter(User.id == elem.user_id).first(),
+                    'comment': elem
+                } for elem in news.comments[::-1]
+            ]
+            user = news.user
+            session.close()
             return render_template('view_news.html', title=f'{news.title}', news=news, form=form,
-                                   session=session, User=User)
+                                   comments=comments_list_dict, user=user)
         else:
             abort(404)
 
@@ -165,9 +257,10 @@ def view_news(id):
         news = session.query(News).filter(News.id == id,
                                           (News.is_private == False) | (News.user == current_user)).first()
         if news:
-            comment = Comment(content=form.content.data, id=current_user.id)
+            comment = Comment(content=form.content.data, user_id=current_user.id)
             news.comments.append(comment)
             session.commit()
+            session.close()
             return redirect(f'/news/{id}')
         else:
             abort(404)
@@ -186,6 +279,7 @@ def add_news():
         current_user.news.append(news)
         session.merge(current_user)
         session.commit()
+        session.close()
         return redirect('/me')
     return render_template('news.html', title='Добавление записи',
                            form=form)
@@ -203,6 +297,7 @@ def edit_news(id):
             form.title.data = news.title
             form.content.data = news.content
             form.is_private.data = news.is_private
+            session.close()
         else:
             abort(404)
     if form.validate_on_submit():
@@ -214,6 +309,7 @@ def edit_news(id):
             news.content = form.content.data
             news.is_private = form.is_private.data
             session.commit()
+            session.close()
             return redirect('/me')
         else:
             abort(404)
@@ -231,6 +327,7 @@ def delete_news(id):
             session.delete(comment)
         session.delete(news)
         session.commit()
+        session.close()
     else:
         abort(404)
     return redirect('/me')
@@ -248,6 +345,7 @@ def delete_comment(news_id, comment_id):
         if comment:
             session.delete(comment[0])
             session.commit()
+            session.close()
         else:
             abort(404)
     else:
@@ -367,7 +465,15 @@ def list_news():
     for friend in friends:
         news += list(filter(lambda x: not x.is_private, friend.news))
     news.sort(key=lambda x: x.created_date, reverse=True)
-    return render_template('all_news.html', title='Новости', news=news)
+    news_list_dict = [
+        {
+            'id': elem.id,
+            'user': elem.user,
+            'news': elem
+        } for elem in news
+    ]
+    session.close()
+    return render_template('all_news.html', title='Новости', news=news_list_dict)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -410,6 +516,7 @@ def register():
         user.set_password(form.password.data)
         session.add(user)
         session.commit()
+        session.close()
         return redirect('/login')
     return render_template('register.html', title='Регистрация', form=form)
 
@@ -417,7 +524,9 @@ def register():
 @login_manager.user_loader
 def load_user(user_id):
     session = db_session.create_session()
-    return session.query(User).get(user_id)
+    user = session.query(User).get(user_id)
+    session.close()
+    return user
 
 
 @app.route('/logout')
