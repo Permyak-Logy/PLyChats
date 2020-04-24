@@ -542,7 +542,7 @@ def logout():
 
 def main():
     db_session.global_init('db/db_social_network.sqlite')
-    app.run(port=8080, host='25.84.229.180')
+    app.run(port=8606, host='25.84.229.180')
 
 
 if __name__ == "__main__":
