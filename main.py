@@ -22,7 +22,6 @@ app.config['SECRET_KEY'] = 'Pip123ininty321Subject'
 @app.route('/chats/<int:chat_id>/edit')
 @app.route('/chats/<int:chat_id>/delete')
 @app.route('/me/edit')
-@app.route('/news')
 @login_required
 def not_using(*args, **kwargs):
     return render_template('base.html', title='PLy.Chats')
@@ -68,8 +67,11 @@ def delete_friend(id):
     session = db_session.create_session()
 
     if current_user.is_friend(session, id):
-        session.delete(current_user.get_obj_friends_with_user(id, session))
+        chat = current_user.get_chat_with_user(session, id)
+        session.delete(chat) if chat else None
+        session.delete(current_user.get_obj_friends_with_user(session, id))
         session.commit()
+        session.close()
         return redirect(f'/{id}')
     else:
         abort(404)
@@ -306,6 +308,7 @@ def view_chat(id):
 
 
 @app.route('/chats/<int:chat_id>/delete_message/<int:message_id>')
+@login_required
 def delete_message(chat_id, message_id):
     session = db_session.create_session()
     chat = session.query(Chat).filter(Chat.id == chat_id).first()
@@ -324,28 +327,47 @@ def delete_message(chat_id, message_id):
 
 
 @app.route('/chats/open_with_friend/<int:id>')
+@login_required
 def open_chat_with_user(id):
-    print(current_user.id, id)
     session = db_session.create_session()
     user = session.query(User).filter(User.id == id).first()
     if not user or not user.is_friend(session, current_user.id):
-        print(404)
         abort(404)
-    chat = user.get_chat_with_user(session, user.id)
-    print('=', chat)
+    chat = current_user.get_chat_with_user(session, user.id)
     if not chat:
         chat = Chat(user_a=current_user.id, user_b=id)
         session.add(chat)
         session.commit()
 
-    chat = user.get_chat_with_user(session, user.id)
-    print('=', chat)
+    chat = current_user.get_chat_with_user(session, user.id)
     session.close()
     return redirect(f'/chats/{chat.id}')
 
 
-# @app.route('/chats/add/<user:id>')
-# def p(*args, **kwargs): pass
+@app.route('/chats/delete/<int:id>')
+@login_required
+def delete_chat(id):
+    session = db_session.create_session()
+    chat = current_user.get_chat(session, id)
+    if chat:
+        session.delete(chat)
+        session.commit()
+        session.close()
+        return redirect('/chats')
+    else:
+        abort(404)
+
+
+@app.route('/news')
+@login_required
+def list_news():
+    session = db_session.create_session()
+    friends = current_user.get_all_friends_users(session)
+    news = []
+    for friend in friends:
+        news += list(filter(lambda x: not x.is_private, friend.news))
+    news.sort(key=lambda x: x.created_date, reverse=True)
+    return render_template('all_news.html', title='Новости', news=news)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -425,20 +447,26 @@ def t():
         user2 = User(name='Паша', surname='Ла', email='pa@mail.ru')
         user2.set_password('123')
         session.add(user2)
-    session.commit()
+        session.commit()
 
     user3: User = session.query(User).filter(User.id == 3).first()
     if not user3:
         user3 = User(name='Елена', surname='sh', email='e@mail.ru')
         user3.set_password('123')
         session.add(user3)
-    session.commit()
+        session.commit()
 
     if not user1.is_friend(session, user2.id):
         friend = Friends(user_id_a=user1.id, user_id_b=user2.id)
         session.add(friend)
         session.commit()
 
+    if not user1.is_friend(session, user3.id):
+        friend = Friends(user_id_a=user1.id, user_id_b=user3.id)
+        session.add(friend)
+        session.commit()
+
+    return session.close()
     chat = session.query(Chat).filter(Chat.id == 1).first()
     if not chat:
         chat = Chat(user_a=user1.id, user_b=user2.id)

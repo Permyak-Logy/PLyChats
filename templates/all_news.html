@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 align="right">{{ title }}</h1><hr />
+{% for item in news %}
+    <div align="right">
+        <div class="col-md6 border rounded" style="width: 70%">
+            <div align="center">
+                <a href="/{{ item.user.id }}">{{ item.user.surname }} {{ item.user.name }}</a>
+                <span><b>{{item.title}}</b></span><br />
+                <p align="center">{{item.created_date}}</p>
+            </div>
+            <div align="center">
+                {% for line in item.content.split("\n") %}
+                    <i>{{ line }}</i><br />
+                {% endfor %}
+            </div>
+            <div align="right">
+                <a href="/news/{{ item.id }}" class="btn btn-warning">Просмотреть</a>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+{% endblock %}

@@ -14,6 +14,7 @@
         </div>
         <div align="right">
             <a href="/chats/{{ item['id']}}" class="btn btn-warning">Просмотреть</a>
+            <a href="/chats/delete/{{ item['id'] }}" class="btn btn-danger">Очистить чат</a>
         </div>
     </div><br />
 {% endfor %}
