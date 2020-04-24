@@ -41,7 +41,7 @@
         <div class="col-md6 border rounded" style="width: 70%">
             <div align="center">
                 <a href="/{{ user.id }}">{{ user }}</a>
-                <span><b>{{item.title}}</b></span><br />
+                <span><b>{{item.title}}</b>{% if item.is_private %} (Приватная){% endif %}</span><br />
                 <p align="center">{{item.created_date}}</p>
             </div>
             <div align="center">

@@ -105,7 +105,7 @@ def user_page(id):
         current_user_is_friend_user = current_user.is_friend(session, user.id)
         friend_request = session.query(FriendRequest).filter(FriendRequest.sender == current_user.id,
                                                              FriendRequest.recipient == user.id).first()
-        news = list(filter(lambda x: not x.is_private or x.user == current_user, user.news))
+        news = list(filter(lambda x: not x.is_private or x.user == current_user, user.news))[::-1]
 
         session.close()
         return render_template('user_page.html', title=f'{user.surname} {user.name}', user=user, news=news,
@@ -272,15 +272,19 @@ def add_news():
     form = NewsForm()
     if form.validate_on_submit():
         session = db_session.create_session()
-        news = News()
-        news.title = form.title.data
-        news.content = form.content.data
-        news.is_private = form.is_private.data
-        current_user.news.append(news)
-        session.merge(current_user)
-        session.commit()
-        session.close()
-        return redirect('/me')
+        user = session.query(User).filter(User.id == current_user.id).first()
+        if user:
+            news = News()
+            news.title = form.title.data
+            news.content = form.content.data
+            news.is_private = form.is_private.data
+            user.news.append(news)
+            session.merge(current_user)
+            session.commit()
+            session.close()
+            return redirect('/me')
+        else:
+            abort(404)
     return render_template('news.html', title='Добавление записи',
                            form=form)
 
@@ -538,52 +542,7 @@ def logout():
 
 def main():
     db_session.global_init('db/db_social_network.sqlite')
-    t()
-    app.run(port=8080, host='127.0.0.1')
-
-
-def t():
-    session = db_session.create_session()
-    user1: User = session.query(User).filter(User.id == 1).first()
-    if not user1:
-        user1 = User(name='Макс', surname='Sh', email='maxsika2004@mail.ru')
-        user1.set_password('123')
-        session.add(user1)
-        session.commit()
-
-    user2: User = session.query(User).filter(User.id == 2).first()
-    if not user2:
-        user2 = User(name='Паша', surname='Ла', email='pa@mail.ru')
-        user2.set_password('123')
-        session.add(user2)
-        session.commit()
-
-    user3: User = session.query(User).filter(User.id == 3).first()
-    if not user3:
-        user3 = User(name='Елена', surname='sh', email='e@mail.ru')
-        user3.set_password('123')
-        session.add(user3)
-        session.commit()
-
-    if not user1.is_friend(session, user2.id):
-        friend = Friends(user_id_a=user1.id, user_id_b=user2.id)
-        session.add(friend)
-        session.commit()
-
-    if not user1.is_friend(session, user3.id):
-        friend = Friends(user_id_a=user1.id, user_id_b=user3.id)
-        session.add(friend)
-        session.commit()
-
-    return session.close()
-    chat = session.query(Chat).filter(Chat.id == 1).first()
-    if not chat:
-        chat = Chat(user_a=user1.id, user_b=user2.id)
-        session.add(chat)
-        message = Message(content=f'Сообщение {chat.id}', user_id=user1.id, chat_id=chat.id)
-        session.add(message)
-        session.commit()
-    session.close()
+    app.run(port=8080, host='25.84.229.180')
 
 
 if __name__ == "__main__":

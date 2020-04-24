@@ -28,7 +28,7 @@ class AccountForm(FlaskForm):
     about = TextAreaField('О себе')
     email = EmailField('Логин / Почта')
     phone = StringField('Телефон')
-    address = StringField('Адресс')
+    address = StringField('Адрес')
     submit = SubmitField('Сохранить')
 
 
