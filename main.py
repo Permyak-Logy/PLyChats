@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, request, abort, url_for
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_ngrok import run_with_ngrok
 
 from forms import LoginForm, RegisterForm, NewsForm, MessageForm, AccountForm
 from data import db_session
@@ -18,6 +19,7 @@ app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'Pip123ininty321Subject'
+run_with_ngrok(app)
 
 
 @app.route('/me/delete')
@@ -542,7 +544,7 @@ def logout():
 
 def main():
     db_session.global_init('db/db_social_network.sqlite')
-    app.run(port=8606, host='25.84.229.180')
+    app.run()
 
 
 if __name__ == "__main__":
