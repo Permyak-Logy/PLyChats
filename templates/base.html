@@ -11,19 +11,46 @@
     <style>
         .menu {
             position: fixed; /* Фиксированное положение */
-            top: 7.9%;
-            left: 2%;
-            padding: 10px;
+            top: 6%;
+            left: 0.1%;
+            padding: 0.1%;
+            right: 82.3%;
             background: #F5F5F5; /* Цвет фона */
-            /* border: 1px solid green; */ /* Параметры рамки */
+            border: 2px groove LimeGreen; /* Параметры рамки */
+            float: left;
+            margin-top: 0.9%;
+            margin-left: 0.01%;
+            margin-right: 3%;
+            overflow: hidden;
+            z-index: 1;
         }
+        .menu:hover {
+            background: #D3D3D3; /* Цвет фона */
+        }
+
         .text {
             color: white;
         }
         body {
-
             background-repeat: no-repeat;
             background-color: #87d6b9;
+        }
+        main {
+            position: relative;
+            top: 3vw;
+            margin-top: 5%;
+            margin-left: 2%;
+            margin-right: 2%;
+            overflow: auto;
+            z-index: 2;
+         }
+        header {
+            position: fixed;
+            width: 100%;
+            bottom: 92.1%;
+            top: 0%;
+            margin-bottom: 5%;
+            z-index: 3;
         }
     </style><!-- background-image: url("/static/img/background.jpg"); -->
     <title>{{title}}</title>
@@ -31,21 +58,20 @@
 </head>
 <body>
 
-<header style="position: fixed; width: 100%;">
+<header >
     <nav class="navbar navbar-light bg-light">
         <a class="navbar-brand" href="#"><h4 style="font-family: Showcard Gothic; font-size: 170%">PLy.Chats</h4></a>
-
         {% if current_user.is_authenticated %}
             <a class="navbar-brand" href="/me/edit">{{ current_user.surname }} {{ current_user.name }} [id: {{ current_user.id }}]</a>
             <a class="btn btn-danger" href="/logout">Выйти</a>
         {% else %}
             <p>
-                <a class="btn btn-primary " href="/register">Зарегистрироваться</a>
+                <a class="btn btn-primary" href="/register">Зарегистрироваться</a>
                 <a class="btn btn-success" href="/login">Войти</a>
             </p>
         {% endif %}
 
-        <a class="'navbar-brand"><h6 style="font-family: MV Boli;">PLy Systems</h6></a>
+        <a class="'navbar-brand"><h6 style="font-family: Segoe Print; font-size: 69%;">PLy Systems</h6></a>
     </nav>
 </header>
 
@@ -53,15 +79,20 @@
 <div class="menu">
     <ul>
         {% for link, text in [("/me", "Моя страница"), ("/news", "Новости"), ("/chats", "Чаты"), ("/friends", "Друзья")] %}
-            <li><a class="navbar-brand" href="{{ link }}"><p style="color: black;">{{ text }}</p></a></li>
+            <li>
+                <a class="navbar-brand" href="{{ link }}">
+                    <p style="color: black; font-family: Segoe Print; font-size: 90%;"onMouseOver="this.style.color='DarkGreen'" onMouseOut="this.style.color='black'">
+                        {{ text }}
+                    </p>
+                </a>
+            </li>
         {% endfor %}
     </ul>
 </div>
 {% endif %}
 
 <!-- Begin page content -->
-<main role="main" class="container" style="top: 60%; left: 10%">
-    <br /><br /><br /><br />
+<main role="main" class="container">
     {% if message %}
         <div class="alert alert-danger" role="alert">
             {{ message }}

@@ -4,7 +4,6 @@ from flask_ngrok import run_with_ngrok
 
 from forms import LoginForm, RegisterForm, NewsForm, MessageForm, AccountForm
 from data import db_session
-
 from data.chats import Chat
 from data.messages import Message
 from data.news import News
