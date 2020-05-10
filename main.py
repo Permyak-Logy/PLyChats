@@ -218,9 +218,10 @@ def accept_friend_request(id):
 @login_required
 def delete_friend_requests(id):
     session = db_session.create_session()
-    friend_request = session.query(FriendRequest).filter(FriendRequest.id == id,
-                                                         (FriendRequest.sender == current_user.id) |
-                                                         (FriendRequest.recipient == current_user.id)).first()
+    friend_requests = session.query(FriendRequest).filter(FriendRequest.id == id)
+    print(repr(friend_requests.all()))
+    friend_request = friend_requests.filter((FriendRequest.sender == current_user.id) |
+                                            (FriendRequest.recipient == current_user.id)).first()
     if friend_request:
         session.delete(friend_request)
         session.commit()
