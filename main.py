@@ -32,7 +32,8 @@ def delete_me(*args, **kwargs):
         for news in user.news:
             delete_news(news.id)
         session.close()
-
+        # После удаления новостей и друзей, нужно ОБЯЗЯТЕЛЬНО пересоздать сессию и
+        # сделать повторный поиск человека, иначе вылезет ОШИБКА
         session = db_session.create_session()
         user = session.query(User).filter(User.id == current_user.id).first()
         session.delete(user)
@@ -51,7 +52,7 @@ def index():
 
 @app.route('/me')
 @login_required
-def me():
+def me():  # Перенаправит на свою страницу текущего пользователя
     return redirect(f'/{current_user.id}')
 
 
@@ -156,14 +157,14 @@ def list_friend_requests():
             'sender': session.query(User).filter(User.id == elem.sender).first(),
             'recipient': session.query(User).filter(User.id == elem.recipient).first()
         } for elem in friend_requests_in
-    ]
+    ]  # Входящие запросы в друзья
     friend_requests_out_list_dict = [
         {
             'id': elem.id,
             'sender': session.query(User).filter(User.id == elem.sender).first(),
             'recipient': session.query(User).filter(User.id == elem.recipient).first()
         } for elem in friend_requests_out
-    ]
+    ]  # Исходящие запросы в друзья
     session.close()
     return render_template('friend_requests.html', title='Заявки в друзья',
                            requests_in=friend_requests_in_list_dict, requests_out=friend_requests_out_list_dict)
@@ -175,6 +176,7 @@ def send_friend_requests(id):
     session = db_session.create_session()
 
     if current_user.is_friend(session, id):
+        # Нельзя отправить приглашение в др если он и так друг
         session.close()
         return redirect(f'/{id}')
 
@@ -222,8 +224,8 @@ def accept_friend_request(id):
 @login_required
 def delete_friend_requests(id):
     session = db_session.create_session()
+    # Нахождение запроса в друзья по его id
     friend_requests = session.query(FriendRequest).filter(FriendRequest.id == id)
-    print(repr(friend_requests.all()))
     friend_request = friend_requests.filter((FriendRequest.sender == current_user.id) |
                                             (FriendRequest.recipient == current_user.id)).first()
     if friend_request:
@@ -250,7 +252,7 @@ def view_news(id):
                     'author': session.query(User).filter(User.id == elem.user_id).first(),
                     'comment': elem
                 } for elem in news.comments[::-1]
-            ]
+            ]  # Все коментарии к новости
             user = news.user
             session.close()
             return render_template('view_news.html', title=f'{news.title}', news=news, form=form,
@@ -351,7 +353,7 @@ def delete_comment(news_id, comment_id):
     if news:
         comment = list(
             filter(lambda c: c.id == comment_id and (news.user == current_user or c.user_id == current_user.id),
-                   news.comments))
+                   news.comments))  # Поиск коментария
         if comment:
             session.delete(comment[0])
             session.commit()
@@ -373,7 +375,7 @@ def list_chats():
             'id': chat.id, 'chat': chat,
             'name': str(session.query(User).filter(User.id == chat.get_opponent_id(session, current_user.id)).first())
         } for chat in chats
-    ]
+    ]  # Список всех чатов
     session.close()
     return render_template('chats.html', title='Чаты', chats=chats_list_dicts)
 
@@ -394,7 +396,7 @@ def view_chat(id):
                     'id': message.id, 'message': message,
                     'author': session.query(User).filter(User.id == message.user_id).first()
                 } for message in messages
-            ]
+            ]  # Список всех сообщений
             session.close()
             return render_template('view_chat.html',
                                    title=str(opponent_user), chat=chat, form=form,
@@ -440,13 +442,16 @@ def open_chat_with_user(id):
     session = db_session.create_session()
     user = session.query(User).filter(User.id == id).first()
     if not user or not user.is_friend(session, current_user.id):
+        # Чтобы открыть чат с пользователем, нужно чтобы он был и он был вашим другом
         abort(404)
     chat = current_user.get_chat_with_user(session, user.id)
     if not chat:
+        # Если чата с пользователем не существует то он создаётся
         chat = Chat(user_a=current_user.id, user_b=id)
         session.add(chat)
         session.commit()
 
+    # Повторный поиск необходим для предотвращения ошибки
     chat = current_user.get_chat_with_user(session, user.id)
     session.close()
     return redirect(f'/chats/{chat.id}')
@@ -471,17 +476,18 @@ def delete_chat(id):
 def list_news():
     session = db_session.create_session()
     friends = current_user.get_all_friends_users(session)
-    news = []
+    news = []  # Нахождение всех новостей друзей, которые не приватны
     for friend in friends:
         news += list(filter(lambda x: not x.is_private, friend.news))
-    news.sort(key=lambda x: x.created_date, reverse=True)
+
+    news.sort(key=lambda x: x.created_date, reverse=True)  # Сортировка по дате создания
     news_list_dict = [
         {
             'id': elem.id,
             'user': elem.user,
             'news': elem
         } for elem in news
-    ]
+    ]  # Список всех новостей
     session.close()
     return render_template('all_news.html', title='Новости', news=news_list_dict)
 
@@ -547,7 +553,7 @@ def logout():
 
 
 def main():
-    db_session.global_init('db/db_social_network.sqlite')
+    db_session.global_init('../db/db_social_network.sqlite')
     app.run()
 
 
