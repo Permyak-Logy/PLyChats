@@ -31,6 +31,10 @@ def delete_me(*args, **kwargs):
             delete_friend(friend.id)
         for news in user.news:
             delete_news(news.id)
+        session.close()
+
+        session = db_session.create_session()
+        user = session.query(User).filter(User.id == current_user.id).first()
         session.delete(user)
         session.commit()
         session.close()
