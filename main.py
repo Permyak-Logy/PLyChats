@@ -553,7 +553,7 @@ def logout():
 
 
 def main():
-    db_session.global_init('../db/db_social_network.sqlite')
+    db_session.global_init('db/db_social_network.sqlite')
     app.run()
 
 
