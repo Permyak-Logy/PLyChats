@@ -1,27 +1,22 @@
-from flask import Flask, render_template, redirect, request, abort, url_for
+from flask import Flask, render_template, redirect, request, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 from forms import LoginForm, RegisterForm, NewsForm, MessageForm, AccountForm
 from data import db_session
-from data.chats import Chat
-from data.messages import Message
-from data.news import News
-from data.comments import Comment
-from data.users import User
-from data.friends import Friends
-from data.friend_requests import FriendRequest
+from data import Chat, Message, News, Comment, User, Friends, FriendRequest
 
 from datetime import datetime
 
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
+# noinspection SpellCheckingInspection
 app.config['SECRET_KEY'] = 'Pip123ininty321Subject'
 
 
 @app.route('/me/delete')
 @login_required
-def delete_me(*args, **kwargs):
+def delete_me(*_, **__):
     session = db_session.create_session()
     user = session.query(User).filter(User.id == current_user.id).first()
     if user:
@@ -58,46 +53,43 @@ def me():  # Перенаправит на свою страницу текущ�
 @login_required
 def edit_me():
     form = AccountForm()
-    if request.method == "GET":
-        session = db_session.create_session()
-        user = session.query(User).filter(User.id == current_user.id).first()
-        if user:
-            form.name.data = user.name
-            form.surname.data = user.surname
-            form.patronymic.data = user.patronymic
-            form.about.data = user.about
-            form.email.data = user.email
-            form.phone.data = user.phone
-            form.address.data = user.address
-            session.close()
-        else:
-            abort(404)
-    if form.validate_on_submit():
-        session = db_session.create_session()
-        user = session.query(User).filter(User.id == current_user.id).first()
-        if user:
-            if session.query(User).filter(User.id != user.id, User.email == form.email.data).first():
-                return render_template('me.html', title='Аккаунт',
-                                       form=form,
-                                       message="Такой email уже занят")
-            if session.query(User).filter(User.id != user.id, User.phone == form.phone.data).first():
-                return render_template('me.html', title='Аккаунт',
-                                       form=form,
-                                       message="Такой телефон уже занят")
+    with db_session.create_session() as session:
+        if request.method == "GET":
+            user = session.query(User).filter(User.id == current_user.id).first()
+            if user:
+                form.name.data = user.name
+                form.surname.data = user.surname
+                form.patronymic.data = user.patronymic
+                form.about.data = user.about
+                form.email.data = user.email
+                form.phone.data = user.phone
+                form.address.data = user.address
+            else:
+                abort(404)
+        if form.validate_on_submit():
+            user = session.query(User).filter(User.id == current_user.id).first()
+            if user:
+                if session.query(User).filter(User.id != user.id, User.email == form.email.data).first():
+                    return render_template('me.html', title='Аккаунт',
+                                           form=form,
+                                           message="Такой email уже занят")
+                if session.query(User).filter(User.id != user.id, User.phone == form.phone.data).first():
+                    return render_template('me.html', title='Аккаунт',
+                                           form=form,
+                                           message="Такой телефон уже занят")
 
-            user.name = form.name.data
-            user.surname = form.surname.data
-            user.patronymic = form.patronymic.data
-            user.about = form.about.data
-            user.email = form.email.data
-            user.phone = form.phone.data
-            user.address = form.address.data
-            user.modified_date = datetime.now()
-            session.commit()
-            session.close()
-            return redirect('/me')
-        else:
-            abort(404)
+                user.name = form.name.data
+                user.surname = form.surname.data
+                user.patronymic = form.patronymic.data
+                user.about = form.about.data
+                user.email = form.email.data
+                user.phone = form.phone.data
+                user.address = form.address.data
+                user.modified_date = datetime.now()
+                session.commit()
+                return redirect('/me')
+            else:
+                abort(404)
     return render_template('me.html', title='Аккаунт', form=form)
 
 
@@ -537,10 +529,9 @@ def register():
 
 @login_manager.user_loader
 def load_user(user_id):
-    session = db_session.create_session()
-    user = session.query(User).get(user_id)
-    session.close()
-    return user
+    with db_session.create_session() as session:
+        user = session.query(User).get(user_id)
+        return user
 
 
 @app.route('/logout')
@@ -551,7 +542,7 @@ def logout():
 
 
 def main():
-    db_session.global_init('db/db_social_network.sqlite')
+    db_session.global_init(db_file='sqlite:///db/db_social_network.sqlite?check_same_thread=False')
     app.run(host='0.0.0.0', port=80)
 
 

@@ -1,11 +1,13 @@
 import datetime
+
 import sqlalchemy
+from flask_login import UserMixin
+from sqlalchemy import orm
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from .chats import Chat
 from .db_session import SqlAlchemyBase
 from .friends import Friends
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
-from sqlalchemy import orm
 
 
 class User(SqlAlchemyBase, UserMixin):
