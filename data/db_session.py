@@ -1,3 +1,5 @@
+import os
+
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from sqlalchemy.orm import Session
@@ -20,20 +22,17 @@ Session.__enter__ = __enter__
 Session.__exit__ = __exit__
 
 
-def global_init(*, conn_str: str = None, db_file: str = None, mkdir=False):
+def global_init(*, conn_str: str):
     global __factory
 
     if __factory:
         return
 
-    if not conn_str and not db_file:
-        raise FileNotFoundError("Необходимо указать файл базы данных.")
+    if not conn_str:
+        raise FileNotFoundError("Необходимо указать подключение к базе данных.")
 
-    if not bool(conn_str) ^ bool(db_file):
-        raise AttributeError("Укажите одно из conn_str или db_file")
     print(f"Подключение к базе данных по адресу '{conn_str}'")
-
-    engine = sa.create_engine(conn_str or db_file, echo=False)
+    engine = sa.create_engine(conn_str, echo=False)
     __factory = orm.sessionmaker(bind=engine)
 
     SqlAlchemyBase.metadata.create_all(engine)

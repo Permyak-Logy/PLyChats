@@ -542,7 +542,8 @@ def logout():
 
 
 def main():
-    db_session.global_init(db_file='sqlite:///db/db_social_network.sqlite?check_same_thread=False')
+    # db_session.global_init(conn_str='sqlite:///db/db_social_network.sqlite?check_same_thread=False')
+    db_session.global_init(conn_str='postgresql://192.168.0.5:5432/social_net.sqlite')
     app.run(host='0.0.0.0', port=80)
 
 
