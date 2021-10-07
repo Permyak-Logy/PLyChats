@@ -1,3 +1,4 @@
+import sqlalchemy.exc
 from flask import Flask, render_template, redirect, request, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
@@ -542,8 +543,11 @@ def logout():
 
 
 def main():
-    # db_session.global_init(conn_str='sqlite:///db/db_social_network.sqlite?check_same_thread=False')
-    db_session.global_init(conn_str='postgresql://192.168.0.5:5432/social_net.sqlite')
+    try:
+        db_session.global_init(conn_str='postgresql://192.168.0.5:5432/social_net.sqlite')
+    except sqlalchemy.exc.OperationalError:
+        db_session.global_init(conn_str='sqlite:///db/db_social_network.sqlite?check_same_thread=False')
+
     app.run(host='0.0.0.0', port=80)
 
 
