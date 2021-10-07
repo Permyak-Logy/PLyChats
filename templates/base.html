@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet"
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
@@ -10,44 +9,44 @@
           crossorigin="anonymous">
     <link rel="stylesheet"
           type="text/css"
-          href="/static/css/style.css" />
+          href="/static/css/style.css"/>
     <!-- background-image: url("/static/img/background.jpg"); -->
     <title>{{title}}</title>
 
 </head>
 <body>
-
-<header >
-    <nav class="navbar navbar-light bg-light">
+<header>
+    <nav class="navbar navbar-dark bg-dark">
         <a class="navbar-brand" href="#"><h4 style="font-family: Showcard Gothic; font-size: 170%">PLy.Chats</h4></a>
         {% if current_user.is_authenticated %}
-            <a class="navbar-brand" href="/me/edit">{{ current_user.surname }} {{ current_user.name }} [id: {{ current_user.id }}]</a>
-            <a class="btn btn-danger" href="/logout">Выйти</a>
+            <a class="navbar-brand" href="/me/edit">{{ current_user.surname }} {{ current_user.name }} [id: {{
+                current_user.id }}]</a>
+            <a class="btn btn-outline-danger" href="/logout">Выйти</a>
         {% else %}
             <p>
-                <a class="btn btn-primary" href="/register">Зарегистрироваться</a>
-                <a class="btn btn-success" href="/login">Войти</a>
+                <a class="btn btn-outline-primary" href="/register">Зарегистрироваться</a>
+                <a class="btn btn-outline-success" href="/login">Войти</a>
             </p>
         {% endif %}
 
-        <a class="'navbar-brand"><h6 style="font-family: Segoe Print; font-size: 69%;">PyPLy</h6></a>
+        <a class="'navbar-brand">
+            <!--<h6 style="font-family: Segoe Print; font-size: 69%;">PyPLy</h6>-->
+            <img src="/static/img/PyPLy.png" alt="PyPLy" height="40">
+        </a>
     </nav>
 </header>
 
 {% if current_user.is_authenticated %}
-<div class="menu">
-    <ul>
-        {% for link, text in [("/me", "Моя страница"), ("/news", "Новости"), ("/chats", "Чаты"), ("/friends", "Друзья")] %}
-            <li>
-                <a class="navbar-brand" href="{{ link }}">
-                    <p style="color: black; font-family: Segoe Print; font-size: 90%;" onMouseOver="this.style.color='DarkGreen'" onMouseOut="this.style.color='black'">
-                        {{ text }}
-                    </p>
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-</div>
+    <div class="menu">
+        <ul>
+            {% for link, text in [("/me", "Моя страница"), ("/news", "Новости"), ("/chats", "Чаты"), ("/friends", "Друзья")] %}
+                <li><a class="navbar-brand" href="{{ link }}">
+                        <p style="color: black; font-family: Segoe Print; font-size: 90%;"
+                           onMouseOver="this.style.color='DarkGreen'" onMouseOut="this.style.color='black'">{{ text }}</p>
+                </a></li>
+            {% endfor %}
+        </ul>
+    </div>
 {% endif %}
 
 <!-- Begin page content -->
@@ -57,9 +56,8 @@
             {{ message }}
         </div>
     {% endif %}
-
     {% block content %}{% endblock %}
-
 </main>
+
 </body>
 </html>

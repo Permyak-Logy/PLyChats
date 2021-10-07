@@ -3,7 +3,7 @@
       top: 10%;
       left: 0.1%;
       padding: 0.1%;
-      right: 82.3%;
+      right: 83.3%;
       background: #F5F5F5;
       border: 2px groove LimeGreen;
       float: left;
@@ -22,7 +22,7 @@
       }
 body  {
       background-repeat: no-repeat;
-      background-color: #87d6b9;
+      background-color: #009999;
       }
 main  {
       position: relative;
@@ -40,4 +40,4 @@ header {
       top: 0%;
       margin-bottom: 5%;
       z-index: 3;
-       }
+}

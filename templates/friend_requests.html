@@ -4,46 +4,49 @@
 
 <div align="right">
     <h1>Запросы в друзья</h1>
-    <a href="/friends" class="btn btn-primary">Назад к списку</a><br />
+    <a href="/friends" class="btn btn-primary">Назад к списку</a><br/>
 </div>
 
-<h2 align="center">Входящие</h2><hr />
+<h2 align="center">Входящие</h2>
+<hr/>
 
 {% for item in requests_in %}
-    <div align="right">
-        <div class="col-md6 border rounded" style="width: 70%;">
-            {% set user = item['sender'] %}
-            <div align="left">
-                <a href="/{{ user.id }}">{{ user.surname }} {{ user.name }} {{ user.patronymic }}</a><br />
-                {% if user.address %}{{ user.address }}{% endif %}
-            </div>
-
-            {% if user.about %}
-                <p align="center">{{ user.about }}</p>
-            {% endif %}
-
-            <a href="/friends/requests/accept/{{ item['id'] }}" class="btn btn-primary">Принять</a>
-            <a href="/friends/requests/delete/{{ item['id'] }}" class="btn btn-danger">Отклонить</a>
+<div align="right">
+    <div class="col-md6 border rounded" style="width: 70%;">
+        {% set user = item['sender'] %}
+        <div align="left">
+            <a href="/{{ user.id }}">{{ user.surname }} {{ user.name }} {{ user.patronymic }}</a><br/>
+            {% if user.address %}{{ user.address }}{% endif %}
         </div>
+
+        {% if user.about %}
+        <p align="center">{{ user.about }}</p>
+        {% endif %}
+
+        <a href="/friends/requests/accept/{{ item['id'] }}" class="btn btn-primary">Принять</a>
+        <a href="/friends/requests/delete/{{ item['id'] }}" class="btn btn-danger">Отклонить</a>
     </div>
+</div>
 {% endfor %}
 
-<h2 align="center">Исходящие</h2><hr />
+<h2 align="center">Исходящие</h2>
+<hr/>
 {% for item in requests_out %}
-    <div align="right">
-        <div class="col-md6 border rounded" style="width: 70%;">
-            {% set user = item['recipient'] %}
+<div align="right">
+    <div class="col-md6 border rounded" style="width: 70%;">
+        {% set user = item['recipient'] %}
 
-            <div align="left"><a href="/{{ user.id }}">{{ user.surname }} {{ user.name }} {% if user.patronymic %}{{ user.patronymic }}{% endif %}</a><br />
-                {% if user.address %}{{ user.address }}{% endif %}
-            </div>
-
-            {% if user.about %}
-                <p align="center">{{ user.about }}</p>
-            {% endif %}
-
-            <a href="/friends/requests/delete/{{ item['id'] }}" class="btn btn-danger">Удалить</a>
+        <div align="left"><a href="/{{ user.id }}">{{ user.surname }} {{ user.name }} {% if user.patronymic %}{{
+            user.patronymic }}{% endif %}</a><br/>
+            {% if user.address %}{{ user.address }}{% endif %}
         </div>
+
+        {% if user.about %}
+        <p align="center">{{ user.about }}</p>
+        {% endif %}
+
+        <a href="/friends/requests/delete/{{ item['id'] }}" class="btn btn-danger">Удалить</a>
     </div>
+</div>
 {% endfor %}
 {% endblock %}
