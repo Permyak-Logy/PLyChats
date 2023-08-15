@@ -3,7 +3,7 @@
 {% block content %}
 
 
-<h1 align="center">{{ chat.get_name(session, current_user) }}</h1><br/>
+<h1 align="center">{{ title }}</h1><br/>
 
 <form action="" method="post">
     {{ form.hidden_tag() }}
@@ -21,20 +21,18 @@
 </form>
 
 {% for item in messages|reverse %}
-    <div class="col-md6 border rounded">
-        {% set author = session.query(User).filter(User.id == item.user_id).first() %}
-
-        <div align="{% if item.user_id == current_user.id %}right{% else %}left{% endif %}"><a href="/{{ item.user_id }}">{{ author.surname }} {{ author.name }}</a><br />
-            <p>{{item.created_date}}</p>
+    <div class="col-md6 border rounded" style="background-color: lightgray">
+        <div align="{% if item['author'].id == current_user.id %}right{% else %}left{% endif %}"><a href="/{{ item['author'].id }}">{{ item['author'].__str__() }}</a><br />
+            <p>{{item['message'].created_date}}</p>
         </div>
         <div align="center">
-            {% for line in item.content.split("\n") %}
+            {% for line in item['message'].content.split("\n") %}
                 <i>{{ line }}</i><br />
             {% endfor %}
         </div>
-        {% if (chat.owner == current_user.id and chat.is_public) or item.user_id == current_user.id %}
+        {% if item['message'].user_id == current_user.id %}
             <div align="right">
-                <a href="/chats/{{ chat.id }}/delete_message/{{ item.id }}" class="btn btn-danger">Удалить</a>
+                <a href="/chats/{{ chat.id }}/delete_message/{{ item['id'] }}" class="btn btn-danger">Удалить</a>
             </div>
         {% endif %}
     </div>

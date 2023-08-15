@@ -2,18 +2,29 @@
 
 {% block content %}
 
-<h1 align="right">{{ user.name }} {{ user.surname}}</h1>
+<h1 align="right">{{ user }}</h1>
 
 {% if current_user == user %}
 
-{% elif session.query(FriendRequest).filter(FriendRequest.sender == current_user.id, FriendRequest.recipient == user.id).first()%}
+{% elif friend_request %}
     <div align="right"><h5 style="color: green;">Запрос дружбы отправлен</h5></div>
-{% elif not current_user.is_friend(user.id, session) %}
+{% elif not current_user_is_friend_user %}
     <div align="right"><a href="/friends/requests/send/{{ user.id }}" class="btn btn-success">Отправить запрос дружбы</a></div>
 {% else %}
+    <div align="right"><a href="/chats/open_with_friend/{{ user.id }}" class="btn btn-primary">Открыть ЛС</a></div>
     <div align="right"><a href="/friends/delete/{{ user.id }}" class="btn btn-danger">Удалить из друзей</a></div>
 {% endif %}
-
+<div>
+    <h4>О себе:<br />
+        {% if user.about %}
+            {% for line in user.about.split("\n") %}
+                 <i>{{ line }}</i><br />
+            {% endfor %}
+        {% endif %}
+    </h4>
+    <h4>{% if user.phone %}Телефон: {{ user.phone }}{% endif %}</h4>
+    <h4>{% if user.address %}Адрес: {{ user.address }}{% endif %}</h4>
+</div>
 <div align="right">
     <p>
         <b>Стена</b>
@@ -25,12 +36,12 @@
     <hr />
 </div>
 
-{% for item in user.news if not item.is_private or item.user == current_user %}
+{% for item in news %}
     <div align="right">
         <div class="col-md6 border rounded" style="width: 70%">
             <div align="center">
-                <a href="/{{ user.id }}">{{ item.user.surname }} {{ item.user.name }}</a>
-                <span><b>{{item.title}}</b></span><br />
+                <a href="/{{ user.id }}">{{ user }}</a>
+                <span><b>{{item.title}}</b>{% if item.is_private %} (Приватная){% endif %}</span><br />
                 <p align="center">{{item.created_date}}</p>
             </div>
             <div align="center">

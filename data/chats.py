@@ -2,34 +2,27 @@ import datetime
 import sqlalchemy
 from sqlalchemy import orm
 from .db_session import SqlAlchemyBase
-from .users import User
+from data.messages import Message
 
 
 class Chat(SqlAlchemyBase):
     __tablename__ = 'chats'
-
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
-    name = sqlalchemy.Column(sqlalchemy.String)
-    owner = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
-    is_public = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False)
+    id = sqlalchemy.Column(sqlalchemy.Integer, autoincrement=True, primary_key=True)
+    user_a = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    user_b = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
 
     messages = orm.relation("Message", back_populates='chat')
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
-    association_table = sqlalchemy.Table('association_chats_users', SqlAlchemyBase.metadata,
-                                         sqlalchemy.Column('user', sqlalchemy.Integer,
-                                                           sqlalchemy.ForeignKey('users.id')),
-                                         sqlalchemy.Column('chat', sqlalchemy.Integer,
-                                                           sqlalchemy.ForeignKey('chats.id'))
-                                         )
 
-    def get_name(self, session: sqlalchemy.orm.Session, cur_user=None):
-        if not self.is_public:
-            for user in self.get_members(session):
-                if user != cur_user:
-                    return f'{user.surname} {user.name}'
-        return self.name
+    def __repr__(self):
+        return f'Chat(user_a={self.user_a} user_b={self.user_b} created_date={self.created_date})'
 
-    def get_members(self, session: sqlalchemy.orm.Session):
-        result = []
-        [[result.append(user) for chat in user.chats if chat.id == self.id] for user in session.query(User).all()]
-        return result
+    def _get_all_messages(self, session: sqlalchemy.orm.Session) -> sqlalchemy.orm.Query:
+        return session.query(Message).filter(Message.chat_id == self.id)
+
+    def get_all_messages(self, session: sqlalchemy.orm.Session) -> list:
+        return self._get_all_messages(session).all()
+
+    def get_opponent_id(self, session: sqlalchemy.orm.Session, user_id: int) -> int:
+        opponent_id = self.user_a if self.user_a != user_id else self.user_b
+        return opponent_id

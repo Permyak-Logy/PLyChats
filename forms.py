@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.html5 import EmailField
+from wtforms.fields.html5 import EmailField
 from wtforms import PasswordField, BooleanField, SubmitField, StringField, TextAreaField
 from wtforms.validators import DataRequired
 
@@ -19,6 +19,17 @@ class RegisterForm(FlaskForm):
     password = PasswordField('Пароль*', validators=[DataRequired()])
     password_again = PasswordField('Повторите пароль*', validators=[DataRequired()])
     submit = SubmitField('Зарегистрироваться')
+
+
+class AccountForm(FlaskForm):
+    name = StringField('Имя', validators=[DataRequired()])
+    surname = StringField('Фамилия', validators=[DataRequired()])
+    patronymic = StringField('Отчество')
+    about = TextAreaField('О себе')
+    email = EmailField('Логин / Почта')
+    phone = StringField('Телефон')
+    address = StringField('Адрес')
+    submit = SubmitField('Сохранить')
 
 
 class NewsForm(FlaskForm):

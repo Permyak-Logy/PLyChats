@@ -1,0 +1,43 @@
+.menu {
+      position: fixed;
+      top: 10%;
+      left: 0.1%;
+      padding: 0.1%;
+      right: 83.3%;
+      background: #F5F5F5;
+      border: 2px groove LimeGreen;
+      float: left;
+      margin-top: 0.9%;
+      margin-left: 0.01%;
+      margin-right: 3%;
+      overflow: hidden;
+      z-index: 1;
+      }
+.menu:hover {
+      background: #D3D3D3;
+      }
+
+.text {
+      color: white;
+      }
+body  {
+      background-repeat: no-repeat;
+      background-color: #009999;
+      }
+main  {
+      position: relative;
+      top: 3vw;
+      margin-top: 5%;
+      margin-left: 2%;
+      margin-right: 2%;
+      overflow: auto;
+      z-index: 2;
+      }
+header {
+      position: fixed;
+      width: 100%;
+      bottom: 92.1%;
+      top: 0%;
+      margin-bottom: 5%;
+      z-index: 3;
+}
