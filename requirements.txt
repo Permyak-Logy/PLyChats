@@ -1,4 +1,4 @@
 SQLAlchemy~=1.4.3
-Werkzeug~=2.2.3
+Werkzeug~=2.3.8
 Flask~=2.2.5
 WTForms~=2.3.3
